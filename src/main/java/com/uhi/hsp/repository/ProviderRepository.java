@@ -1,6 +1,10 @@
 package com.uhi.hsp.repository;
 
+import com.uhi.hsp.model.Practitioner;
 import com.uhi.hsp.model.Provider;
+
+import java.util.List;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 
 

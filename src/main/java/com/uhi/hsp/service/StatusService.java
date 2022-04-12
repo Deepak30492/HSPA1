@@ -74,6 +74,12 @@ public class StatusService {
 	@Value("classpath:static/on_status.json")
 	private Resource on_statusFile;
 
+	@Value("${abdm.hspa1.url}")
+	private String PROVIDER_URL;
+
+	@Value("${abdm.hspa1.id}")
+	private String PROVIDER_ID;
+
 	@Value("${abdm.gateway.url}")
 	private String GATEWAY_URL;
 	final ObjectMapper mapper;
@@ -95,6 +101,9 @@ public class StatusService {
 	CustomerRepository customerRepo;
 	@Autowired
 	OrderRepository orderRepository;
+	private List<Fulfillments> fulfillments3;
+	private Fulfillments fulfillmentDto;
+	private Practitioner practitioner;
 
 	public StatusService(ObjectMapper mapper, ProviderRepository providerRepo, ModelMapper modelMapper) {
 		this.mapper = mapper;
@@ -120,7 +129,8 @@ public class StatusService {
 			Thread.sleep(3000);
 			System.out.println("_____" + GATEWAY_URL);
 			// String endpoint = req.getContext().getConsumer_uri();
-			restTemplate.postForObject(GATEWAY_URL + "/on_search", searchData, String.class);
+			// restTemplate.postForObject(GATEWAY_URL + "/on_search", searchData,
+			// String.class);
 			// String.class);
 
 		} catch (InterruptedException e) {
@@ -176,6 +186,7 @@ public class StatusService {
 		Example<Provider> providerExample = Example.of(provider);
 		List<Provider> result = _providerRepo.findAll(providerExample);
 		// System.out.println("_____________"+result.get(0));
+		System.out.println("__________result" + result);
 
 		if (!result.isEmpty()) {
 			providerDto = modelMapper.map(result.get(0), com.dhp.sdk.beans.Provider.class);
@@ -198,37 +209,63 @@ public class StatusService {
 	private EuaRequestBody getSearchByPersonName(HspRequestBody req) {
 		EuaRequestBody euaRequestBody = new EuaRequestBody();
 		euaRequestBody = (EuaRequestBody) extracteContext(req, euaRequestBody);
-		// OnTBody requestBody = new OnTBody();
-
-		// requestBody = (OnTBody) extracteContext(req, requestBody);
-		System.out.println("__________" + euaRequestBody);
-		Fulfillment personDto = null;
 		String name = req.getMessage().getIntent().getFulfillment().getPerson().getDescriptor().getName();
-		System.out.println("_______" + name);
-		List<Fulfillments> personData;
-		personData = (ArrayList<Fulfillments>) fulfillmentsRepo.findByPractitionerIdNameIgnoreCase(name);
-
-		// Provider result = personData;
-		// System.out.println("_____________"+result.get(0));
+		List<Practitioner> personData = practitionerRepo.findByName(name);
 		if (personData != null) {
-			personDto = modelMapper.map(personData, com.dhp.sdk.beans.Fulfillment.class);
-			com.dhp.sdk.beans.Provider providerDto = modelMapper.map(personData.get(0), com.dhp.sdk.beans.Provider.class);
-			System.out.println("_________" + personData);
-			System.out.println("##################" + providerDto);
-			// List<Fulfillments> fulfillmentInResult=
-			// providerDto.setFulfillments(personData);
-			int counterForPerson = 0;
-			// List<Fulfillments> fulfillmentInResult = personData.get(0).getFulfillments();
-			// providerDto = extractedCategoryDescriptorNames(providerDto, result);
-			// providerDto = extractedPerson(providerDto, result, counterForPerson);
+			ArrayList<Categories> categoriesList = new ArrayList<Categories>();
+			ArrayList<Provider> providerList = new ArrayList<Provider>();
+			ArrayList<Practitioner> personList = new ArrayList<Practitioner>();
+			List<Fulfillments> fulfillmentData = fulfillmentsRepo.findByPractitionerId(personData.get(0));
+			ArrayList<Fulfillment> fulFillmentList = new ArrayList<Fulfillment>();
+			for (Fulfillments fulfillments : fulfillmentData) {
+				Fulfillment fulfillmentDto = new Fulfillment();
+				Person personDto = new Person();
+				fulfillmentDto = modelMapper.map(fulfillments, Fulfillment.class);
+				practitioner = fulfillments.getPractitionerId();
+				personDto = modelMapper.map(practitioner, Person.class);
+				Categories categories = fulfillments.getCategories();
+				Provider provider = fulfillments.getProvider();
+				categoriesList.add(categories);
+				providerList.add(provider);
+				//personList.add(practitioner);
+				fulfillmentDto.setPerson(personDto);
+				fulfillmentDto.setType(fulfillments.getType());
+				fulFillmentList.add(fulfillmentDto);
+			}
+			ArrayList<Category> catDto = new ArrayList<Category>();
+			ArrayList<Descriptor> catDecLis = new ArrayList<Descriptor>();
+			for (Categories c : categoriesList) {
+				Category categoryDto = new Category();
+				Descriptor descripterDto = new Descriptor();
+				categoryDto.setCategoryId(c.getCategoryId().toString());
+				descripterDto.setName(c.getName());
+				categoryDto.setDescriptor(descripterDto);
+				catDecLis.add(descripterDto);
+				catDto.add(categoryDto);
+			}
+			ArrayList<com.dhp.sdk.beans.Provider> providerDto= new ArrayList<com.dhp.sdk.beans.Provider>();
+			com.dhp.sdk.beans.Provider providerDto2 = new com.dhp.sdk.beans.Provider();
+			// For Provider
+			Descriptor providerDescriptor = new Descriptor();
+			providerDescriptor.setName(providerList.get(0).getName());
+			providerDto2.setCategories(catDto);
+			providerDto2.setDescriptor(providerDescriptor);
+			providerDto2.setFulfillments(fulFillmentList);
+			providerDto2.setProviderId(providerList.get(0).getProviderId().toString());
+			providerDto.add(providerDto2);
 
-			int counterForTimer = 0;
-			ArrayList<com.dhp.sdk.beans.Provider> providerList = new ArrayList<>();
-			providerList.add(providerDto);
-			euaRequestBody = extractedContext(euaRequestBody, providerList);
-
+			Message message = new Message();
+			Catalog catalogDto = new Catalog();
+			// Category dec
+			Descriptor categoryDec = new Descriptor();
+			categoryDec.setName("Practo");
+			catalogDto.setDescriptor(categoryDec);
+			catalogDto.setProviders(providerDto);
+			message.setCatalog(catalogDto);
+			euaRequestBody.setMessage(message);
 		}
 		return euaRequestBody;
+
 	}
 
 	// selectProviderById (Start)
@@ -473,6 +510,8 @@ public class StatusService {
 			EuaRequestBody euaBody = (EuaRequestBody) body;
 			euaBody.setContext(req.getContext());
 			euaBody.getContext().setAction("on_search");
+			euaBody.getContext().setProvider_id(PROVIDER_ID);
+			euaBody.getContext().setProvider_uri(PROVIDER_URL);
 			body = euaBody;
 		}
 

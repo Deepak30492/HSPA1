@@ -32,7 +32,7 @@ public class Fulfillments implements Serializable {
 	private Categories categories;
 	@OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
 	@JoinColumn(name = "practitioner_id")
-	// @ToString.Exclude
+	 @ToString.Exclude//new change
 	private Practitioner practitionerId;
 	@Column(name = "start_time")
 	private String startTime;

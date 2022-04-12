@@ -41,11 +41,11 @@ public class HspController {
 	private final StatusService service;
 
 	@PostMapping(value = "/search", consumes = "APPLICATION/JSON", produces = "APPLICATION/JSON")
-	public ResponseEntity<String> search(@RequestBody HspRequestBody req) throws IOException {
+	public ResponseEntity<EuaRequestBody> search(@RequestBody HspRequestBody req) throws IOException {
 		EuaRequestBody body = service.mapSearch(req);
 		// HttpHeaders headers = new HttpHeaders();
 		// headers.setContentType(MediaType.APPLICATION_JSON);resp_ack
-		return ResponseEntity.status(HttpStatus.OK).body( resp_ack );
+		return ResponseEntity.status(HttpStatus.OK).body( body );
 	
 	}
 	@PostMapping(value = "/select", consumes = "APPLICATION/JSON", produces = "APPLICATION/JSON")

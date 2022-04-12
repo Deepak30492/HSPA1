@@ -10,6 +10,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 
 import java.io.Serializable;
+import java.util.List;
 
 @Data
 @Table(schema = "hsp", name = "practitioner")
@@ -48,10 +49,11 @@ public class Practitioner implements Serializable {
 	private String endTime;
 	@Column(name = "status")
 	private String status;
-
-	@OneToOne(mappedBy = "practitionerId",cascade = CascadeType.ALL, orphanRemoval = true,fetch = FetchType.LAZY)
+	@OneToMany(mappedBy = "practitionerId",cascade = CascadeType.ALL, orphanRemoval = true,fetch = FetchType.LAZY)
 	@ToString.Exclude
-	private Fulfillments fulfillments;
+	private List<Fulfillments> fulfillments;
+	@Column(name = "provider_id")
+	private int provideId;
 	
 	
 	

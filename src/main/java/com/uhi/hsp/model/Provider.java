@@ -20,6 +20,11 @@ import java.util.List;
 public class Provider implements Serializable {
 
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)
 	@Column(name = "provider_id")
@@ -33,7 +38,7 @@ public class Provider implements Serializable {
 	private List<Categories> categories;
 
 	@OneToMany(mappedBy = "provider")
-	@ToString.Exclude
+	@ToString.Exclude//new change
 	private List<Fulfillments> fulfillments;
 
 	@Column(name = "city")
@@ -45,4 +50,5 @@ public class Provider implements Serializable {
 	@Column(name = "country")
 	private String country;
 
+	
 }
