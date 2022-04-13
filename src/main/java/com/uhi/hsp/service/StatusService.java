@@ -49,6 +49,7 @@ import java.net.http.HttpRequest;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -114,14 +115,18 @@ public class StatusService {
 	public EuaRequestBody mapSearch(HspRequestBody req) throws IOException {
 		String map = modelMapper.map(req, String.class);
 		EuaRequestBody searchData = null;
+		// com.dhp.sdk.beans.Provider provider =
+		// req.getMessage().getIntent().getProvider();
 		System.out.println("****************" + map.contains("person"));
 		System.out.println();
 		System.out.println("__________________________");
+
 		if (map.contains("person")) {
 			searchData = getSearchByPersonName(req);
 		} else {
 			searchData = getSearchByServiceName(req);
 		}
+
 		String messageId = req.getContext().getMessage_id();
 		// HttpEntity<Object> entity = generateEntityWithHeaders(searchedProviderData,
 		// messageId);
@@ -129,7 +134,8 @@ public class StatusService {
 			Thread.sleep(3000);
 			System.out.println("_____" + GATEWAY_URL);
 			// String endpoint = req.getContext().getConsumer_uri();
-			// restTemplate.postForObject(GATEWAY_URL + "/on_search", searchData,
+			restTemplate.postForObject(GATEWAY_URL + "/on_search", searchData, String.class);
+			// searchData,String.class);
 			// String.class);
 			// String.class);
 
@@ -227,7 +233,7 @@ public class StatusService {
 				Provider provider = fulfillments.getProvider();
 				categoriesList.add(categories);
 				providerList.add(provider);
-				//personList.add(practitioner);
+				// personList.add(practitioner);
 				fulfillmentDto.setPerson(personDto);
 				fulfillmentDto.setType(fulfillments.getType());
 				fulFillmentList.add(fulfillmentDto);
@@ -243,7 +249,7 @@ public class StatusService {
 				catDecLis.add(descripterDto);
 				catDto.add(categoryDto);
 			}
-			ArrayList<com.dhp.sdk.beans.Provider> providerDto= new ArrayList<com.dhp.sdk.beans.Provider>();
+			ArrayList<com.dhp.sdk.beans.Provider> providerDto = new ArrayList<com.dhp.sdk.beans.Provider>();
 			com.dhp.sdk.beans.Provider providerDto2 = new com.dhp.sdk.beans.Provider();
 			// For Provider
 			Descriptor providerDescriptor = new Descriptor();

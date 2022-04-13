@@ -11,6 +11,7 @@ import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
+import org.springframework.http.ResponseEntity.BodyBuilder;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -29,6 +30,8 @@ public class HspController {
 
 	@Value("${spring.application.resp_ack}")
 	String resp_ack;
+	@Value("${spring.application.resp_nack}")
+	String resp_nack;
 
 	@Autowired
 	ModelMapper mapper;
@@ -41,11 +44,18 @@ public class HspController {
 	private final StatusService service;
 
 	@PostMapping(value = "/search", consumes = "APPLICATION/JSON", produces = "APPLICATION/JSON")
-	public ResponseEntity<EuaRequestBody> search(@RequestBody HspRequestBody req) throws IOException {
+	public ResponseEntity<String> search(@RequestBody HspRequestBody req) throws IOException {
 		EuaRequestBody body = service.mapSearch(req);
+		BodyBuilder status = ResponseEntity.status(HttpStatus.OK);
+		String response=null;
+		if (body.getMessage()==null) {
+			response=resp_nack;
+		}else {
+			response=resp_ack;
+		}
 		// HttpHeaders headers = new HttpHeaders();
 		// headers.setContentType(MediaType.APPLICATION_JSON);resp_ack
-		return ResponseEntity.status(HttpStatus.OK).body( body );
+		return ResponseEntity.status(HttpStatus.OK).body( response );
 	
 	}
 	@PostMapping(value = "/select", consumes = "APPLICATION/JSON", produces = "APPLICATION/JSON")
